@@ -41,7 +41,7 @@ uigame.drawOpeningMenuBackground = function*() {
  * @return {Promise}
  */
 uigame.openingMenu = function*() {
-  music.play(ui.RIX_NUM_OPENINGMENU, true, 1);
+  //music.play(ui.RIX_NUM_OPENINGMENU, true, 1);
   yield uigame.drawOpeningMenuBackground();
 
   var menu = [
@@ -286,7 +286,7 @@ uigame.systemMenu = function*() {
 
   var quit = function*() {
     if (yield uigame.confirmMenu()) {
-      music.play(0, false, 2);
+     // music.play(0, false, 2);
       yield surface.fadeOut(2);
       game.shutdown();
     }
@@ -314,7 +314,7 @@ uigame.systemMenu = function*() {
       // Load Game
       var slot = yield uigame.saveSlotMenu(Global.currentSaveSlot);
       if (slot != ui.MENUITEM_VALUE_CANCELLED) {
-        music.play(0, false, 1);
+       // music.play(0, false, 1);
         yield surface.fadeOut(1);
         yield game.initGameData(slot);
       }
