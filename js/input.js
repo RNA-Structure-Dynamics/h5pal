@@ -1,6 +1,82 @@
 $(document).ready(function () {
-	var json_event_list_str='[{"y": 808, "x": 528}, {"y": 632, "x": 688}, {"y": 672, "x": 736}, {"y": 392, "x": 1168}, {"y": 280, "x": 1264}, {"y": 400, "x": 1280}, {"y": 320, "x": 1472}, {"y": 616, "x": 656}, {"y": 296, "x": 1392}, {"y": 280, "x": 1392}, {"y": 304, "x": 1344}, {"y": 304, "x": 1344}, {"y": 1136, "x": 1216}, {"y": 1072, "x": 1536}, {"y": 1048, "x": 1488}, {"y": 1104, "x": 1280}, {"y": 1088, "x": 1344}, {"y": 408, "x": 432}, {"y": 1296, "x": 704}, {"y": 1080, "x": 720}, {"y": 1152, "x": 672}, {"y": 1120, "x": 512}, {"y": 1136, "x": 480}, {"y": 1160, "x": 432}, {"y": 296, "x": 560}, {"y": 1120, "x": 1376}, {"y": 1048, "x": 1328}, {"y": 264, "x": 1296}, {"y": 264, "x": 1296}, {"y": 264, "x": 1296}, {"y": 320, "x": 768}, {"y": 376, "x": 1328}]'
-	var json_event_list=JSON.parse(json_event_list_str);
+	var json_event_list=[{"y": 808, "x": 528}, {"y": 632, "x": 688}, {"y": 672, "x": 736}, {"y": 392, "x": 1168}, {"y": 280, "x": 1264}, {"y": 400, "x": 1280}, {"y": 320, "x": 1472}, {"y": 616, "x": 656}, {"y": 296, "x": 1392}, {"y": 280, "x": 1392}, {"y": 304, "x": 1344}, {"y": 304, "x": 1344}, {"y": 1136, "x": 1216}, {"y": 1072, "x": 1536}, {"y": 1048, "x": 1488}, {"y": 1104, "x": 1280}, {"y": 1088, "x": 1344}, {"y": 408, "x": 432}, {"y": 1296, "x": 704}, {"y": 1080, "x": 720}, {"y": 1152, "x": 672}, {"y": 1120, "x": 512}, {"y": 1136, "x": 480}, {"y": 1160, "x": 432}, {"y": 296, "x": 560}, {"y": 1120, "x": 1376}, {"y": 1048, "x": 1328}, {"y": 264, "x": 1296}, {"y": 264, "x": 1296}, {"y": 264, "x": 1296}, {"y": 320, "x": 768}, {"y": 376, "x": 1328}];
+	var	imageLoader = {
+	 loaded:true,
+	 loadedImages:0,
+	 totalImages:0,
+	 load:function(url){
+		 this.totalImages++;
+		 this.loaded = false;
+		 var image = new Image();
+		 image.src = url;
+		 image.onload = function(){
+			imageLoader.loadedImages++;
+			if(imageLoader.loadedImages === imageLoader.totalImages){
+				imageLoader.loaded = true;
+				}
+			}
+		 return image;
+	 }
+	}
+
+	var protagonist={
+			name:"protagonist",
+			pixelWidth:22,
+			pixelHeight:50,
+			pixelOffsetX:0,
+			pixelOffsetY:50,
+			spriteImages:{
+			down:0,
+			left:3,
+			up:6,
+			right:9			
+			},
+			player_coordinate:{x:18,y:20,h:1},//[x,y,h]
+			player_last_coordinate:{x:18,y:20,h:1},
+			player_direction:"down",
+			is_moving:false,
+			player_current_frame:0,//[0,1,2]
+			init:function(){
+				this.spriteSheet = imageLoader.load('images/'+this.name+'.png');
+			},
+			update_pos:function(delta_x,delta_y,new_direction){
+				this.player_last_coordinate={x:this.player_coordinate.x,y:this.player_coordinate.y,h:this.player_coordinate.h};
+				this.is_moving=true;
+				this.player_coordinate.x+=delta_x;
+				this.player_coordinate.y+=delta_y;	
+				this.player_direction=new_direction;		
+				this.player_coordinate.h=1-this.player_coordinate.h;
+				//setTimeout(protagonist.update_pos_frame,800);
+			},
+			update_pos_frame:function(){
+				if(protagonist.is_moving){
+					protagonist.player_current_frame=(protagonist.player_current_frame+1)%3;
+					if(protagonist.player_current_frame==0){
+						protagonist.is_moving=false;
+					}
+					else{
+					//	setTimeout(protagonist.update_pos_frame,800);
+						//		protagonist.update_pos_frame();
+					}
+				}
+			},
+			draw:function(){
+				//use box to locate the sprite
+				//clear the previous front convas context should be done before calling this function
+				var currentOffset=this.spriteImages[this.player_direction]+this.player_current_frame;
+				if(this.player_current_frame==1){
+				[x_center,y_center]=game.toGameCoordinate(this.player_last_coordinate);
+				}
+				else{
+				[x_center,y_center]=game.toGameCoordinate(this.player_coordinate);
+				}
+				//parameter:img,split_pos_x,split_pos_y,split_width;split_height;
+				//pos_x_canvas,pos_y_canvas,scaling_x,scaling_y
+				game.foreground_ctx.strokeRect(x_center-this.pixelWidth/2,y_center-this.pixelHeight+4,this.pixelWidth,this.pixelHeight);
+				game.foreground_ctx.drawImage(this.spriteSheet,this.pixelWidth*currentOffset,0,this.pixelWidth,this.pixelHeight,
+				x_center-this.pixelWidth/2,y_center-this.pixelHeight+4,this.pixelWidth,this.pixelHeight);
+			}
+		}
 	var game={
 	animationTimeout:100,
 	viewportWidth:0,
@@ -15,7 +91,6 @@ $(document).ready(function () {
 	mapWidth:2064,
 	offsetX:300,
 	offsetY:200,
-	player_coordinate:{x:18,y:20,h:1},//[x,y,h]
 	mapBorderHiddenOffset:0,
 	handlePanning:function(){
 		if(!mouse.insideCanvas)return
@@ -51,9 +126,12 @@ $(document).ready(function () {
 			game.refreshBackground = false;
 		}
 		game.foreground_ctx.clearRect(0,0,game.viewportWidth,game.viewportHeight);
-		game.drawDiamond(game.toGameCoordinate([game.player_coordinate.x,game.player_coordinate.y,game.player_coordinate.h]));
+		protagonist.update_pos_frame();
+		protagonist.draw();
+		game.drawDiamond(game.toGameCoordinate([protagonist.player_coordinate.x,protagonist.player_coordinate.y,protagonist.player_coordinate.h]));
 		if (game.running){
-			requestAnimationFrame(game.drawingLoop);
+			//requestAnimationFrame(game.drawingLoop);
+			setTimeout(game.drawingLoop,200);
 		}
 	},
 	animationLoop:function(){
@@ -63,36 +141,37 @@ $(document).ready(function () {
 	processKeyboardEvent:function(ev){
 		switch(ev.which){
 			case 38://up
-			if(game.player_coordinate.h==0){
-				game.player_coordinate.x-=1;
-				game.player_coordinate.y-=1;
-			}
-			game.player_coordinate.h=1-game.player_coordinate.h;
-			break;
-			case 40://down
-			if(game.player_coordinate.h==1){
-				game.player_coordinate.x+=1;
-				game.player_coordinate.y+=1;
-			}
-			game.player_coordinate.h=1-game.player_coordinate.h;
-			break;
-			case 37://left
-			if(game.player_coordinate.h==0){
-				game.player_coordinate.x-=1;
+			if(protagonist.player_coordinate.h==0){
+				protagonist.update_pos(0,-1,"up");
+			
 			}
 			else{
-				game.player_coordinate.y+=1;
+				protagonist.update_pos(1,0,"up");
 			}
-			game.player_coordinate.h=1-game.player_coordinate.h;
+			break;
+			case 40://key_board_down
+			if(protagonist.player_coordinate.h==0){
+				protagonist.update_pos(-1,0,"down");
+			}
+			else{
+				protagonist.update_pos(0,1,"down");
+			}
 			break;
 			case 39://right
-			if(game.player_coordinate.h==0){
-				game.player_coordinate.y-=1;
+			if(protagonist.player_coordinate.h==1){
+				protagonist.update_pos(1,1,"right");
 			}
 			else{
-				game.player_coordinate.x+=1;
+				protagonist.update_pos(0,0,"right");				
 			}
-			game.player_coordinate.h=1-game.player_coordinate.h;
+			break;
+			case 37://left
+			if(protagonist.player_coordinate.h==0){
+				protagonist.update_pos(-1,-1,"left");
+			}
+			else{
+				protagonist.update_pos(0,0,"left");
+			}
 			break;
 
 			default:break;
@@ -107,10 +186,16 @@ $(document).ready(function () {
 		game.viewportHeight=game.$canvas[0].height;
 		game.foreground_ctx.strokeStyle="#00ff00";
 		game.ctx.strokeStyle="#ff0000";
-		
+		protagonist.init();
 	},
 	toGameCoordinate:function(xyHPos){
+		if (xyHPos.x){
+			tmp=xyHPos;
+			[x,y,h]=[tmp.x,tmp.y,tmp.h];
+		}
+		else{
 		[x,y,h]=xyHPos;
+		}
 		if(h==0){
 			x_center=x*32+16-game.offsetX;
 			y_center=y*16+8-game.offsetY;
